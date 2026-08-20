@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
+    <title>Guess The Number - เกมทายตัวเลข 2 คน</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap');
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 50%, #e0f7fa 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+        }
+
+        h1 {
+            font-size: clamp(1.4rem, 4vw, 2.2rem);
+            color: #ad1457;
+            margin: 10px 0;
+            text-align: center;
+        }
+
+        .subtitle {
+            font-size: clamp(0.75rem, 2vw, 0.95rem);
+            color: #7b1fa2;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .game-area {
+            display: flex;
+            gap: 12px;
+            width: 100%;
+            max-width: 900px;
+            margin-bottom: 10px;
+        }
+
+        .player-side {
+            flex: 1;
+            background: rgba(255,255,255,0.85);
+            border-radius: 20px;
+            padding: 14px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            border: 3px solid transparent;
+            transition: all 0.4s;
+        }
+
+        .player-side.active { border-color: #f48fb1; }
+        .player-side.locked { opacity: 0.4; pointer-events: none; filter: blur(2px); }
+        .player-side.hidden { display: none; }
+
+        .player-name {
+            font-size: clamp(1rem, 2.5vw, 1.3rem);
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+        .p1-color { color: #e91e63; }
+        .p2-color { color: #3f51b5; }
+
+        .score-display {
+            font-size: clamp(0.7rem, 1.8vw, 0.85rem);
+            color: #888;
+            margin-bottom: 8px;
+        }
+
+        .secret-slots {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .secret-slot {
+            width: clamp(38px, 8vw, 52px);
+            height: clamp(48px, 10vw, 62px);
+            border-radius: 12px;
+            background: #f3e5f5;
+            border: 2px dashed #ce93d8;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: clamp(1.2rem, 3vw, 1.8rem);
+            font-weight: 700;
+            color: #7b1fa2;
+            transition: all 0.3s;
+        }
+
+        .secret-slot.revealed {
+            background: #e8f5e9;
+            border: 2px solid #81c784;
+            color: #2e7d32;
+        }
+
+        .secret-input-group {
+            display: flex;
+            gap: 6px;
+            margin-bottom: 8px;
+            align-items: center;
+        }
+
+        .secret-input-group input {
+            width: clamp(32px, 6vw, 40px);
+            height: clamp(40px, 8vw, 50px);
+            border-radius: 10px;
+            border: 2px solid #b39ddb;
+            text-align: center;
+            font-size: clamp(1rem, 2.5vw, 1.4rem);
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            color: #4a148c;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+
+        .secret-input-group input:focus { border-color: #7c4dff; }
+        .secret-input-group input[type="password"] { letter-spacing: 4px; }
+
+        .btn {
+            padding: 8px 18px;
+            border: none;
+            border-radius: 12px;
+            font-family: 'Kanit', sans-serif;
+            font-size: clamp(0.8rem, 2vw, 0.95rem);
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .btn-set { background: #b39ddb; color: white; }
+        .btn-set:hover:not(:disabled) { background: #9575cd; }
+        .btn-guess { background: #f48fb1; color: white; }
+        .btn-guess:hover:not(:disabled) { background: #f06292; }
+        .btn-pass { background: linear-gradient(135deg, #f48fb1, #ce93d8); color: white; font-size: clamp(0.9rem, 2.2vw, 1.05rem); padding: 12px 28px; }
+        .btn-pass:hover { transform: scale(1.05); }
+
+        .guess-section {
+            display: flex;
+            gap: 6px;
+            align-items: center;
+            margin-bottom: 8px;
+        }
+
+        .guess-section input {
+            width: clamp(32px, 6vw, 40px);
+            height: clamp(40px, 8vw, 50px);
+            border-radius: 10px;
+            border: 2px solid #f48fb1;
+            text-align: center;
+            font-size: clamp(1rem, 2.5vw, 1.4rem);
+            font-family: 'Kanit', sans-serif;
+            font-weight: 600;
+            color: #ad1457;
+            outline: none;
+            transition: border-color 0.3s;
+        }
+        .guess-section input:focus { border-color: #e91e63; }
+        .guess-section input:disabled { background: #eee; border-color: #ccc; }
+
+        .result-display {
+            font-size: clamp(0.75rem, 2vw, 0.9rem);
+            color: #e91e63;
+            min-height: 24px;
+            margin-bottom: 6px;
+            text-align: center;
+        }
+
+        .history-section { width: 100%; margin-top: 6px; }
+
+        .history-title {
+            font-size: clamp(0.7rem, 1.6vw, 0.82rem);
+            color: #999;
+            margin-bottom: 4px;
+        }
+
+        .history-log {
+            max-height: 110px;
+            overflow-y: auto;
+            font-size: clamp(0.65rem, 1.5vw, 0.78rem);
+            color: #666;
+            line-height: 1.7;
+            background: #fafafa;
+            border-radius: 10px;
+            padding: 6px 8px;
+        }
+        .history-log::-webkit-scrollbar { width: 4px; }
+        .history-log::-webkit-scrollbar-thumb { background: #ddd; border-radius: 4px; }
+
+        .bottom-bar {
+            width: 100%;
+            max-width: 900px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .turn-indicator {
+            font-size: clamp(0.85rem, 2.2vw, 1.05rem);
+            font-weight: 500;
+            padding: 8px 20px;
+            border-radius: 30px;
+            display: inline-block;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+            color: #888;
+            transition: all 0.3s;
+        }
+        .turn-indicator.p1-turn { color: #e91e63; border: 2px solid #f48fb1; }
+        .turn-indicator.p2-turn { color: #3f51b5; border: 2px solid #9fa8da; }
+        .turn-indicator.setup { color: #7b1fa2; border: 2px solid #ce93d8; }
+
+        /* Pass Screen */
+        .pass-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #fce4ec 0%, #e8eaf6 50%, #e0f7fa 100%);
+            z-index: 50;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 16px;
+            text-align: center;
+            padding: 20px;
+        }
+        .pass-screen.show { display: flex; }
+
+        .pass-screen h2 {
+            font-size: clamp(1.6rem, 5vw, 2.5rem);
+            color: #ad1457;
+        }
+
+        .pass-screen p {
+            font-size: clamp(0.85rem, 2.5vw, 1.1rem);
+            color: #7b1fa2;
+            max-width: 400px;
+        }
+
+        .pass-screen .emoji-big {
+            font-size: clamp(3rem, 8vw, 5rem);
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.4);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.show { display: flex; }
+
+        .modal {
+            background: white;
+            border-radius: 24px;
+            padding: 30px;
+            max-width: 420px;
+            width: 90%;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+            animation: popIn 0.3s ease;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+
+        .modal h2 { font-size: clamp(1.4rem, 4vw, 1.8rem); margin-bottom: 10px; }
+        .modal .win-text { color: #e91e63; }
+        .modal .win-text.p2 { color: #3f51b5; }
+
+        .modal .secrets {
+            font-size: clamp(1rem, 2.5vw, 1.2rem);
+            color: #555;
+            margin: 14px 0;
+            line-height: 2;
+        }
+        .modal .secrets strong {
+            font-size: clamp(1.2rem, 3vw, 1.5rem);
+            letter-spacing: 4px;
+        }
+
+        .modal .btn-restart {
+            background: linear-gradient(135deg, #f48fb1, #ce93d8);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 16px;
+            font-size: clamp(0.95rem, 2.5vw, 1.1rem);
+            font-family: 'Kanit', sans-serif;
+            font-weight: 500;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: transform 0.2s;
+        }
+        .modal .btn-restart:hover { transform: scale(1.05); }
+
+        .confetti {
+            position: fixed;
+            top: -10px;
+            border-radius: 2px;
+            animation: fall linear forwards;
+            z-index: 200;
+            pointer-events: none;
+        }
+        @keyframes fall {
+            to { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+        }
+
+        .emoji-decor {
+            font-size: clamp(1.5rem, 4vw, 2.5rem);
+            text-align: center;
+            margin: 4px 0;
+        }
+
+        .shake { animation: shake 0.3s ease; }
+        @keyframes shake {
+            0%,100% { transform: translateX(0); }
+            25% { transform: translateX(-6px); }
+            75% { transform: translateX(6px); }
+        }
+
+        /* iPad Portrait */
+        @media (min-width: 768px) and (max-width: 1024px) {
+            body { padding: 16px; }
+
+            h1 { font-size: 2rem; margin: 16px 0 6px; }
+            .subtitle { font-size: 1rem; margin-bottom: 14px; }
+
+            .game-area {
+                gap: 20px;
+                margin-bottom: 16px;
+            }
+
+            .player-side {
+                padding: 24px 20px;
+                border-radius: 24px;
+            }
+
+            .player-name { font-size: 1.4rem; margin-bottom: 10px; }
+            .score-display { font-size: 0.9rem; margin-bottom: 12px; }
+
+            .secret-slot {
+                width: 64px;
+                height: 76px;
+                border-radius: 16px;
+                font-size: 2rem;
+                border-width: 3px;
+            }
+
+            .secret-input-group input {
+                width: 52px;
+                height: 60px;
+                font-size: 1.6rem;
+                border-width: 3px;
+                border-radius: 14px;
+            }
+
+            .guess-section input {
+                width: 52px;
+                height: 60px;
+                font-size: 1.6rem;
+                border-width: 3px;
+                border-radius: 14px;
+            }
+
+            .btn {
+                padding: 14px 28px;
+                font-size: 1.05rem;
+                border-radius: 14px;
+            }
+
+            .btn-pass {
+                padding: 18px 40px;
+                font-size: 1.15rem;
+                border-radius: 18px;
+            }
+
+            .result-display {
+                font-size: 1rem;
+                min-height: 30px;
+                margin-bottom: 8px;
+            }
+
+            .history-log {
+                max-height: 140px;
+                font-size: 0.85rem;
+                padding: 10px 12px;
+            }
+
+            .turn-indicator {
+                font-size: 1.1rem;
+                padding: 12px 28px;
+            }
+
+            .pass-screen h2 { font-size: 2.2rem; }
+            .pass-screen p { font-size: 1.15rem; max-width: 480px; }
+            .pass-screen .emoji-big { font-size: 5rem; }
+
+            .modal { padding: 36px; border-radius: 28px; }
+            .modal h2 { font-size: 1.8rem; }
+            .modal .btn-restart {
+                padding: 16px 40px;
+                font-size: 1.15rem;
+                border-radius: 18px;
+            }
+
+            .emoji-decor { font-size: 2.5rem; margin: 6px 0; }
+        }
+
+        /* iPad Landscape */
+        @media (min-width: 1024px) and (orientation: landscape) {
+            body { padding: 12px 24px; }
+
+            h1 { font-size: 1.8rem; margin: 8px 0 4px; }
+            .subtitle { font-size: 0.9rem; margin-bottom: 8px; }
+
+            .game-area {
+                gap: 24px;
+                max-width: 1100px;
+                margin-bottom: 8px;
+            }
+
+            .player-side {
+                padding: 18px;
+                border-radius: 20px;
+            }
+
+            .player-name { font-size: 1.2rem; margin-bottom: 6px; }
+            .secret-slot {
+                width: 56px;
+                height: 66px;
+                font-size: 1.7rem;
+            }
+
+            .secret-input-group input,
+            .guess-section input {
+                width: 48px;
+                height: 54px;
+                font-size: 1.5rem;
+            }
+
+            .btn {
+                padding: 12px 22px;
+                font-size: 0.95rem;
+            }
+
+            .history-log { max-height: 100px; font-size: 0.8rem; }
+        }
+
+        /* Touch device optimizations */
+        @media (hover: none) and (pointer: coarse) {
+            .btn:active:not(:disabled) { transform: scale(0.95); }
+            .btn-pass:active { transform: scale(0.95); }
+            .btn-restart:active { transform: scale(0.95); }
+            input:focus { outline: 3px solid #ce93d8; outline-offset: 2px; }
+        }
+
+        /* Prevent zoom on input focus (iOS) */
+        @supports (-webkit-touch-callout: none) {
+            input { font-size: max(1rem, 16px); }
+        }
+
+        @media (max-width: 600px) {
+            .game-area { flex-direction: column; }
+            .player-side { padding: 12px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="emoji-decor">🌸 🎀 ✨ 🎀 🌸</div>
+    <h1>Guess The Number 💕</h1>
+    <p class="subtitle">เกมทายตัวเลข 3 หลัก สำหรับ 2 คน 💑</p>
+
+    <div class="bottom-bar">
+        <div class="turn-indicator setup" id="turnIndicator">กดปุ่ม "ตั้งค่าเลขลับ" เพื่อเริ่มเกม</div>
+    </div>
+
+    <div class="game-area">
+        <!-- Player 1 -->
+        <div class="player-side hidden" id="side1">
+            <div class="player-name p1-color">Player 1 💖</div>
+            <div class="score-display" id="score1">ชนะ: 0 ครั้ง</div>
+            <div class="secret-slots" id="secret1">
+                <div class="secret-slot" id="s1_0">?</div>
+                <div class="secret-slot" id="s1_1">?</div>
+                <div class="secret-slot" id="s1_2">?</div>
+            </div>
+            <div class="secret-input-group" id="setGroup1">
+                <input type="password" id="secretInput1" maxlength="3" placeholder="_ _ _" inputmode="numeric">
+                <button class="btn btn-set" id="setBtn1" onclick="setSecret(1)">ตั้งค่าเลขลับ</button>
+            </div>
+            <div class="result-display" id="result1"></div>
+            <div class="guess-section" id="guessGroup1">
+                <input type="text" id="guessInput1" maxlength="3" placeholder="ทาย..." inputmode="numeric" disabled>
+                <button class="btn btn-guess" id="guessBtn1" onclick="makeGuess(1)" disabled>ทาย</button>
+            </div>
+            <div class="history-section">
+                <div class="history-title">📋 ประวัติการทาย</div>
+                <div class="history-log" id="history1">ยังไม่มีรายการทาย</div>
+            </div>
+        </div>
+
+        <!-- Player 2 -->
+        <div class="player-side hidden" id="side2">
+            <div class="player-name p2-color">Player 2 💙</div>
+            <div class="score-display" id="score2">ชนะ: 0 ครั้ง</div>
+            <div class="secret-slots" id="secret2">
+                <div class="secret-slot" id="s2_0">?</div>
+                <div class="secret-slot" id="s2_1">?</div>
+                <div class="secret-slot" id="s2_2">?</div>
+            </div>
+            <div class="secret-input-group" id="setGroup2">
+                <input type="password" id="secretInput2" maxlength="3" placeholder="_ _ _" inputmode="numeric">
+                <button class="btn btn-set" id="setBtn2" onclick="setSecret(2)">ตั้งค่าเลขลับ</button>
+            </div>
+            <div class="result-display" id="result2"></div>
+            <div class="guess-section" id="guessGroup2">
+                <input type="text" id="guessInput2" maxlength="3" placeholder="ทาย..." inputmode="numeric" disabled>
+                <button class="btn btn-guess" id="guessBtn2" onclick="makeGuess(2)" disabled>ทาย</button>
+            </div>
+            <div class="history-section">
+                <div class="history-title">📋 ประวัติการทาย</div>
+                <div class="history-log" id="history2">ยังไม่มีรายการทาย</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pass Screen -->
+    <div class="pass-screen" id="passScreen">
+        <div class="emoji-big" id="passEmoji">🫣</div>
+        <h2 id="passTitle">ส่งต่อให้ Player 2</h2>
+        <p id="passDesc">Player 1 ตั้งเลขลับเสร็จแล้ว! ส่งเครื่องให้ Player 2 ตั้งเลขลับบ้าง</p>
+        <button class="btn btn-pass" id="passBtn" onclick="showNextSetup()">พร้อมแล้วกดเลย!</button>
+    </div>
+
+    <!-- Win Modal -->
+    <div class="modal-overlay" id="modal">
+        <div class="modal">
+            <div class="emoji-decor">🎉 🏆 🎉</div>
+            <h2 id="modalTitle"></h2>
+            <div class="secrets">
+                เลขลับ Player 1: <strong id="modalSecret1"></strong><br>
+                เลขลับ Player 2: <strong id="modalSecret2"></strong>
+            </div>
+            <button class="btn-restart" onclick="restartGame()">🔄 เริ่มเกมใหม่</button>
+        </div>
+    </div>
+
+    <script>
+        const state = {
+            phase: 'setup1',
+            secrets: { 1: null, 2: null },
+            turn: null,
+            history: { 1: [], 2: [] },
+            found: { 1: [false, false, false], 2: [false, false, false] },
+            score: { 1: 0, 2: 0 },
+            gameOver: false
+        };
+
+        function showSide(n) {
+            document.getElementById('side1').classList.add('hidden');
+            document.getElementById('side2').classList.add('hidden');
+            document.getElementById(`side${n}`).classList.remove('hidden');
+        }
+
+        function setSecret(p) {
+            const input = document.getElementById(`secretInput${p}`);
+            const val = input.value.trim();
+            if (!/^\d{3}$/.test(val)) {
+                input.classList.remove('shake');
+                void input.offsetWidth;
+                input.classList.add('shake');
+                return;
+            }
+            state.secrets[p] = val;
+            input.disabled = true;
+            document.getElementById(`setBtn${p}`).disabled = true;
+
+            if (p === 1) {
+                const passScreen = document.getElementById('passScreen');
+                document.getElementById('passEmoji').textContent = '🫣';
+                document.getElementById('passTitle').textContent = 'ส่งต่อให้ Player 2 💙';
+                document.getElementById('passDesc').textContent = 'Player 1 ตั้งเลขลับเสร็จแล้ว! ส่งเครื่องให้ Player 2 ตั้งเลขลับบ้าง อย่าแอบมองนะ! 👀';
+                passScreen.classList.add('show');
+            } else {
+                startPlayPhase();
+            }
+        }
+
+        function showNextSetup() {
+            document.getElementById('passScreen').classList.remove('show');
+            state.phase = 'setup2';
+            showSide(2);
+            document.getElementById('turnIndicator').textContent = '💙 Player 2: ตั้งเลขลับของคุณ';
+            document.getElementById('turnIndicator').className = 'turn-indicator setup';
+            document.getElementById('secretInput2').focus();
+        }
+
+        function startPlayPhase() {
+            document.getElementById('passScreen').classList.remove('show');
+            state.phase = 'play';
+            state.turn = 1;
+
+            document.getElementById('side1').classList.remove('hidden', 'locked');
+            document.getElementById('side2').classList.remove('hidden', 'locked');
+
+            for (let p = 1; p <= 2; p++) {
+                document.getElementById(`secretInput${p}`).parentElement.style.display = 'none';
+                document.getElementById(`guessInput${p}`).disabled = true;
+                document.getElementById(`guessBtn${p}`).disabled = true;
+            }
+            updateTurnUI();
+        }
+
+        function updateTurnUI() {
+            const ind = document.getElementById('turnIndicator');
+            const s1 = document.getElementById('side1');
+            const s2 = document.getElementById('side2');
+
+            if (state.turn === 1) {
+                ind.textContent = '💕 ตาของ Player 1 ทายเลขลับ Player 2';
+                ind.className = 'turn-indicator p1-turn';
+                s1.classList.remove('locked');
+                s1.classList.add('active');
+                s2.classList.remove('active');
+                s2.classList.add('locked');
+                document.getElementById('guessInput1').disabled = false;
+                document.getElementById('guessBtn1').disabled = false;
+                document.getElementById('guessInput2').disabled = true;
+                document.getElementById('guessBtn2').disabled = true;
+                document.getElementById('guessInput1').focus();
+            } else {
+                ind.textContent = '💙 ตาของ Player 2 ทายเลขลับ Player 1';
+                ind.className = 'turn-indicator p2-turn';
+                s2.classList.remove('locked');
+                s2.classList.add('active');
+                s1.classList.remove('active');
+                s1.classList.add('locked');
+                document.getElementById('guessInput2').disabled = false;
+                document.getElementById('guessBtn2').disabled = false;
+                document.getElementById('guessInput1').disabled = true;
+                document.getElementById('guessBtn1').disabled = true;
+                document.getElementById('guessInput2').focus();
+            }
+        }
+
+        function makeGuess(p) {
+            if (state.gameOver) return;
+            const input = document.getElementById(`guessInput${p}`);
+            const val = input.value.trim();
+            if (!/^\d{3}$/.test(val)) {
+                input.classList.remove('shake');
+                void input.offsetWidth;
+                input.classList.add('shake');
+                return;
+            }
+
+            const target = p === 1 ? state.secrets[2] : state.secrets[1];
+            const opponent = p === 1 ? 2 : 1;
+            const historyLog = document.getElementById(`history${p}`);
+            const resultDiv = document.getElementById(`result${p}`);
+
+            if (state.history[p].includes(val)) {
+                resultDiv.textContent = '⚠️ เลขนี้เคยทายแล้ว!';
+                input.classList.remove('shake');
+                void input.offsetWidth;
+                input.classList.add('shake');
+                input.value = '';
+                return;
+            }
+
+            let correctPos = 0;
+            let feedback = '';
+            for (let i = 0; i < 3; i++) {
+                if (val[i] === target[i]) {
+                    feedback += '✅ ';
+                    correctPos++;
+                    if (!state.found[p][i]) {
+                        state.found[p][i] = true;
+                        const slot = document.getElementById(`s${p}_${i}`);
+                        slot.textContent = target[i];
+                        slot.classList.add('revealed');
+                    }
+                } else if (target.includes(val[i])) {
+                    feedback += '🟡 ';
+                } else {
+                    feedback += '❌ ';
+                }
+            }
+
+            state.history[p].push(val);
+
+            if (state.history[p].length === 1) historyLog.innerHTML = '';
+            const entry = document.createElement('div');
+            entry.textContent = `${val} → ${feedback}`;
+            historyLog.appendChild(entry);
+            historyLog.scrollTop = historyLog.scrollHeight;
+
+            resultDiv.textContent = `${feedback} (${correctPos}/3 ตำแหน่ง)`;
+
+            if (state.found[p].every(v => v)) {
+                endGame(p);
+                return;
+            }
+
+            input.value = '';
+            state.turn = opponent;
+            updateTurnUI();
+        }
+
+        function endGame(winner) {
+            state.gameOver = true;
+            state.score[winner]++;
+            document.getElementById('score1').textContent = `ชนะ: ${state.score[1]} ครั้ง`;
+            document.getElementById('score2').textContent = `ชนะ: ${state.score[2]} ครั้ง`;
+
+            const ind = document.getElementById('turnIndicator');
+            ind.textContent = `🎉 Player ${winner} ชนะ!`;
+            ind.className = 'turn-indicator';
+
+            document.getElementById('guessInput1').disabled = true;
+            document.getElementById('guessBtn1').disabled = true;
+            document.getElementById('guessInput2').disabled = true;
+            document.getElementById('guessBtn2').disabled = true;
+
+            document.getElementById('side1').classList.remove('locked', 'active');
+            document.getElementById('side2').classList.remove('locked', 'active');
+
+            setTimeout(() => {
+                const title = document.getElementById('modalTitle');
+                title.innerHTML = `<span class="win-text ${winner === 2 ? 'p2' : ''}">🎉 Player ${winner} ชนะ! 🎉</span>`;
+                document.getElementById('modalSecret1').textContent = state.secrets[1];
+                document.getElementById('modalSecret2').textContent = state.secrets[2];
+                document.getElementById('modal').classList.add('show');
+                spawnConfetti();
+            }, 600);
+        }
+
+        function restartGame() {
+            state.phase = 'setup1';
+            state.secrets = { 1: null, 2: null };
+            state.turn = null;
+            state.history = { 1: [], 2: [] };
+            state.found = { 1: [false, false, false], 2: [false, false, false] };
+            state.gameOver = false;
+
+            document.getElementById('modal').classList.remove('show');
+
+            for (let p = 1; p <= 2; p++) {
+                document.getElementById(`secretInput${p}`).value = '';
+                document.getElementById(`secretInput${p}`).disabled = false;
+                document.getElementById(`secretInput${p}`).parentElement.style.display = 'flex';
+                document.getElementById(`setBtn${p}`).disabled = false;
+                document.getElementById(`guessInput${p}`).value = '';
+                document.getElementById(`guessInput${p}`).disabled = true;
+                document.getElementById(`guessBtn${p}`).disabled = true;
+                document.getElementById(`result${p}`).textContent = '';
+                document.getElementById(`history${p}`).innerHTML = 'ยังไม่มีรายการทาย';
+                for (let i = 0; i < 3; i++) {
+                    const slot = document.getElementById(`s${p}_${i}`);
+                    slot.textContent = '?';
+                    slot.classList.remove('revealed');
+                }
+                document.getElementById(`side${p}`).classList.remove('active', 'locked', 'hidden');
+                document.getElementById(`side${p}`).classList.add('hidden');
+            }
+
+            showSide(1);
+            document.getElementById('turnIndicator').textContent = '💖 Player 1: ตั้งเลขลับของคุณ';
+            document.getElementById('turnIndicator').className = 'turn-indicator setup';
+            document.getElementById('secretInput1').focus();
+        }
+
+        function spawnConfetti() {
+            const colors = ['#f48fb1', '#ce93d8', '#9fa8da', '#80cbc4', '#fff176', '#ffab91'];
+            for (let i = 0; i < 60; i++) {
+                const c = document.createElement('div');
+                c.className = 'confetti';
+                c.style.left = Math.random() * 100 + 'vw';
+                c.style.background = colors[Math.floor(Math.random() * colors.length)];
+                c.style.animationDuration = (Math.random() * 2 + 2) + 's';
+                c.style.animationDelay = Math.random() * 0.8 + 's';
+                c.style.width = (Math.random() * 8 + 6) + 'px';
+                c.style.height = (Math.random() * 8 + 6) + 'px';
+                document.body.appendChild(c);
+                setTimeout(() => c.remove(), 4500);
+            }
+        }
+
+        document.querySelectorAll('.secret-input-group input, .guess-section input').forEach(el => {
+            el.addEventListener('input', function() {
+                this.value = this.value.replace(/\D/g, '').slice(0, 3);
+            });
+        });
+
+        document.getElementById('secretInput1').addEventListener('keydown', e => { if (e.key === 'Enter') setSecret(1); });
+        document.getElementById('secretInput2').addEventListener('keydown', e => { if (e.key === 'Enter') setSecret(2); });
+        document.getElementById('guessInput1').addEventListener('keydown', e => { if (e.key === 'Enter') makeGuess(1); });
+        document.getElementById('guessInput2').addEventListener('keydown', e => { if (e.key === 'Enter') makeGuess(2); });
+
+        showSide(1);
+        document.getElementById('turnIndicator').textContent = '💖 Player 1: ตั้งเลขลับของคุณ';
+        document.getElementById('turnIndicator').className = 'turn-indicator setup';
+        document.getElementById('secretInput1').focus();
+    </script>
+</body>
+</html>
