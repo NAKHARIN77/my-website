@@ -566,7 +566,6 @@
             secrets: { 1: null, 2: null },
             turn: null,
             history: { 1: [], 2: [] },
-            found: { 1: [false, false, false], 2: [false, false, false] },
             score: { 1: 0, 2: 0 },
             gameOver: false
         };
@@ -683,18 +682,10 @@
                 return;
             }
 
-            let correctPos = 0;
             let feedback = '';
             for (let i = 0; i < 3; i++) {
                 if (val[i] === target[i]) {
                     feedback += '✅ ';
-                    correctPos++;
-                    if (!state.found[p][i]) {
-                        state.found[p][i] = true;
-                        const slot = document.getElementById(`s${p}_${i}`);
-                        slot.textContent = target[i];
-                        slot.classList.add('revealed');
-                    }
                 } else if (target.includes(val[i])) {
                     feedback += '🟡 ';
                 } else {
@@ -710,12 +701,13 @@
             historyLog.appendChild(entry);
             historyLog.scrollTop = historyLog.scrollHeight;
 
-            resultDiv.textContent = `${feedback} (${correctPos}/3 ตำแหน่ง)`;
-
-            if (state.found[p].every(v => v)) {
+            if (val === target) {
+                resultDiv.textContent = `${feedback} ทายถูกทั้ง 3 ตัว! 🎉`;
                 endGame(p);
                 return;
             }
+
+            resultDiv.textContent = feedback;
 
             input.value = '';
             state.turn = opponent;
@@ -755,7 +747,6 @@
             state.secrets = { 1: null, 2: null };
             state.turn = null;
             state.history = { 1: [], 2: [] };
-            state.found = { 1: [false, false, false], 2: [false, false, false] };
             state.gameOver = false;
 
             document.getElementById('modal').classList.remove('show');
@@ -770,11 +761,6 @@
                 document.getElementById(`guessBtn${p}`).disabled = true;
                 document.getElementById(`result${p}`).textContent = '';
                 document.getElementById(`history${p}`).innerHTML = 'ยังไม่มีรายการทาย';
-                for (let i = 0; i < 3; i++) {
-                    const slot = document.getElementById(`s${p}_${i}`);
-                    slot.textContent = '?';
-                    slot.classList.remove('revealed');
-                }
                 document.getElementById(`side${p}`).classList.remove('active', 'locked', 'hidden');
                 document.getElementById(`side${p}`).classList.add('hidden');
             }
